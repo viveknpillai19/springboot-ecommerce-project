@@ -33,7 +33,7 @@ public class CartService {
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
         if (request.getQuantity() > product.getStock()) {
-            throw new RuntimeException("Requested quantity exceeds available stock.");
+            throw new IllegalStateException("Requested quantity exceeds available stock.");
         }
 
         // Check if the item is already in the cart

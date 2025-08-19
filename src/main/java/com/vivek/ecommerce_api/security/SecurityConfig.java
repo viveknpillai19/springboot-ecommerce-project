@@ -38,7 +38,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/products/**", "/uploads/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/profile/**").hasAnyRole("USER", "ADMIN") // Add this rule
+                        .requestMatchers("/api/profile/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/orders/**").hasRole("USER")
                         .requestMatchers("/api/cart/**").hasRole("USER") // Add this rule
                         .anyRequest().authenticated()
                 )

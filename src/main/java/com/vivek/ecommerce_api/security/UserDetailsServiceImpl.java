@@ -30,16 +30,17 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("User account is locked.");
         }
 
-        // Create a list containing the user's role
+        // --- THIS IS THE CRITICAL PART ---
+        // Create a list containing the user's role from your User entity
         List<GrantedAuthority> authorities = Collections.singletonList(
                 new SimpleGrantedAuthority(appUser.getRole().name())
         );
 
-        // Return the UserDetails object with the correct authorities
+        // Return the UserDetails object with the correct, non-empty list of authorities
         return new org.springframework.security.core.userdetails.User(
                 appUser.getEmail(),
                 appUser.getPassword(),
-                authorities
+                authorities // Pass the list of roles here
         );
     }
 }

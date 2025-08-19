@@ -5,7 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
+import org.springframework.data.jpa.domain.Specification;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,22 +17,28 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
     private final FileStorageService fileStorageService;
+    private final ProductSpecification productSpecification;
 
     public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository,
-                          BrandRepository brandRepository, FileStorageService fileStorageService) {
+                          BrandRepository brandRepository, FileStorageService fileStorageService,
+                          ProductSpecification productSpecification) { // Add this parameter
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.brandRepository = brandRepository;
         this.fileStorageService = fileStorageService;
+        this.productSpecification = productSpecification; // Add this line
     }
+    public List<ProductResponse> getFilteredProducts(String name, Long categoryId, Long brandId, BigDecimal minPrice, BigDecimal maxPrice) {
+        // Start the chain directly with the first specification
+        Specification<Product> spec = productSpecification.hasName(name)
+                .and(productSpecification.inCategory(categoryId))
+                .and(productSpecification.byBrand(brandId))
+                .and(productSpecification.hasPriceBetween(minPrice, maxPrice));
 
-    // Public method to get all products
-    public List<ProductResponse> getAllProducts() {
-        return productRepository.findAll().stream()
+        return productRepository.findAll(spec).stream()
                 .map(ProductResponse::fromProduct)
                 .collect(Collectors.toList());
     }
-
     // Admin method to create a product
     @Transactional
     public ProductResponse createProduct(ProductRequest request, MultipartFile image) {

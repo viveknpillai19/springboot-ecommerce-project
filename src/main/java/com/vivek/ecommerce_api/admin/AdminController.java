@@ -1,6 +1,9 @@
 // In package: com.vivek.ecommerce_api.admin
 package com.vivek.ecommerce_api.admin;
 
+import com.vivek.ecommerce_api.order.OrderResponse;
+import com.vivek.ecommerce_api.order.OrderService;
+import com.vivek.ecommerce_api.order.UpdateOrderStatusRequest;
 import com.vivek.ecommerce_api.product.ProductRequest;
 import com.vivek.ecommerce_api.product.ProductResponse;
 import com.vivek.ecommerce_api.product.ProductService;
@@ -18,11 +21,13 @@ import java.util.List;
 public class AdminController {
 
     private final UserService userService;
-    private final ProductService productService; // Inject ProductService
+    private final ProductService productService;
+    private final OrderService orderService;
 
-    public AdminController(UserService userService, ProductService productService) {
+    public AdminController(UserService userService, ProductService productService, OrderService orderService) {
         this.userService = userService;
         this.productService = productService;
+        this.orderService = orderService;
     }
 
 
@@ -51,5 +56,15 @@ public class AdminController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Long productId) {
         productService.deleteProduct(productId);
         return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/orders")
+    public ResponseEntity<List<OrderResponse>> getAllOrders() {
+        return ResponseEntity.ok(orderService.getAllOrders());
+    }
+
+    @PutMapping("/orders/{orderId}/status")
+    public ResponseEntity<OrderResponse> updateOrderStatus(@PathVariable Long orderId,
+                                                           @RequestBody UpdateOrderStatusRequest request) {
+        return ResponseEntity.ok(orderService.updateOrderStatus(orderId, request.getStatus()));
     }
 }

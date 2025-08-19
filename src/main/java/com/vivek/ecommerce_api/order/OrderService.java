@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -87,5 +89,53 @@ public class OrderService {
 
         // 5. Save the order
         return orderRepository.save(order);
+    }
+    public List<OrderResponse> getOrdersForUser(String email) {
+        return orderRepository.findAllByUserEmail(email).stream()
+                .map(OrderResponse::fromOrder)
+                .collect(Collectors.toList());
+    }
+
+    // Method for an admin to get all orders
+    public List<OrderResponse> getAllOrders() {
+        return orderRepository.findAll().stream()
+                .map(OrderResponse::fromOrder)
+                .collect(Collectors.toList());
+    }
+    @Transactional
+    public OrderResponse updateOrderStatus(Long orderId, OrderStatus newStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + orderId));
+        order.setStatus(newStatus);
+        Order updatedOrder = orderRepository.save(order);
+        return OrderResponse.fromOrder(updatedOrder);
+    }
+
+    // Method for a user to cancel their own order
+    @Transactional
+    public OrderResponse cancelOrder(Long orderId, String email) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + orderId));
+
+        // Security check: ensure the user owns this order
+        if (!order.getUser().getEmail().equals(email)) {
+            throw new IllegalStateException("You are not authorized to cancel this order.");
+        }
+
+        // Business logic check: ensure the order is in a cancelable state
+        if (order.getStatus() != OrderStatus.PROCESSING) {
+            throw new IllegalStateException("Order cannot be cancelled as it is already " + order.getStatus());
+        }
+
+        // Restore the stock for each item in the order
+        for (OrderItem item : order.getItems()) {
+            Product product = item.getProduct();
+            product.setStock(product.getStock() + item.getQuantity());
+            // No need to save the product here, JPA's transactional context will handle it
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        Order updatedOrder = orderRepository.save(order);
+        return OrderResponse.fromOrder(updatedOrder);
     }
 }

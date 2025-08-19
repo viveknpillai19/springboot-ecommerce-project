@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/api/products/**", "/uploads/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/profile/**").hasAnyRole("USER", "ADMIN") // Add this rule
+                        .requestMatchers("/api/cart/**").hasRole("USER") // Add this rule
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

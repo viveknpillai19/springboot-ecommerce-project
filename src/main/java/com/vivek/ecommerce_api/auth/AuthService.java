@@ -6,6 +6,8 @@ import com.vivek.ecommerce_api.user.User;
 import com.vivek.ecommerce_api.user.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -43,13 +45,18 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        // Let Spring Security handle the authentication
-        authenticationManager.authenticate(
+        // This performs authentication and throws an error if it fails
+        Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
-        // If authentication is successful, generate a token
-        String token = jwtUtil.generateToken(request.getEmail());
-        return new AuthResponse(token, request.getEmail());
+        // If successful, get the UserDetails object
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
+        // Generate token with roles
+        String token = jwtUtil.generateToken(userDetails);
+        return new AuthResponse(token, userDetails.getUsername());
     }
+
+
 }

@@ -33,4 +33,14 @@ public class ProfileController {
         UserResponse updatedProfile = userService.updateUserProfile(email, request);
         return ResponseEntity.ok(updatedProfile);
     }
+    @GetMapping("/whoami")
+    public ResponseEntity<?> whoAmI(@AuthenticationPrincipal UserDetails userDetails) {
+        // This method will help us debug the user's roles
+        System.out.println("--- WHO AM I DEBUG ---");
+        System.out.println("Username: " + userDetails.getUsername());
+        System.out.println("Authorities: " + userDetails.getAuthorities());
+        System.out.println("--------------------");
+
+        return ResponseEntity.ok(userDetails.getAuthorities());
+    }
 }

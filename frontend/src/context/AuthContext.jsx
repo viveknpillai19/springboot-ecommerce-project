@@ -6,17 +6,18 @@ import {
   getCart, 
   addItemToCart, 
   removeItemFromCart, 
-  placeOrder 
+  // 1. Rename the imported function here to avoid conflict
+  placeOrder as apiPlaceOrder 
 } from '../services/apiClient';
 
-// 1. Create the context
+// Create the context
 const AuthContext = createContext();
 
-// 2. Create the provider component
+// Create the provider component
 export function AuthProvider({ children }) {
   // --- STATE ---
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [user, setUser] = useState(null); // Holds decoded user info like email and roles
+  const [user, setUser] = useState(null);
   const [cart, setCart] = useState(null);
 
   // --- HELPER FUNCTIONS ---
@@ -99,7 +100,8 @@ export function AuthProvider({ children }) {
 
   const placeOrder = async () => {
     try {
-      const successMessage = await placeOrder(token);
+      // 2. Call the renamed API function here
+      const successMessage = await apiPlaceOrder(token);
       fetchCart(token); // Refresh the cart, which will now be empty
       return successMessage;
     } catch (error) {
@@ -128,7 +130,7 @@ export function AuthProvider({ children }) {
   );
 }
 
-// 3. Create a custom hook to easily use the context
+// Create a custom hook to easily use the context
 export function useAuth() {
   return useContext(AuthContext);
 }

@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AppBar from '@mui/material/AppBar';
@@ -8,49 +7,51 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 
 function Navbar() {
-  // Get the token AND the user object from the context
   const { token, user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate('/'); // Redirect to home after logout
   };
 
   return (
     <AppBar position="static">
       <Toolbar>
+        {/* Site Title - always visible */}
         <Typography 
           variant="h6" 
           component={Link} 
           to="/" 
           sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}
         >
-          SpringCommerce
+          ClickCart
         </Typography>
         
+        {/* Navigation Links Box */}
         <Box>
           <Button color="inherit" component={Link} to="/">Home</Button>
           <Button color="inherit" component={Link} to="/products">Products</Button>
           
           {token ? (
-            // --- UPDATED LOGIC FOR LOGGED-IN USERS ---
+            // --- Links for LOGGED-IN users ---
             <>
+              <Button color="inherit" component={Link} to="/profile">Profile</Button>
               <Button color="inherit" component={Link} to="/cart">Cart</Button>
               <Button color="inherit" component={Link} to="/orders">My Orders</Button>
-              <Button color="inherit" component={Link} to="/profile">Profile</Button>
 
-              {/* Conditionally render the Admin button */}
+              {/* Conditionally render Admin links */}
               {user?.roles?.includes('ROLE_ADMIN') && (
-                <Button color="inherit" component={Link} to="/admin/orders">
-                  Admin
-                </Button>
+                <>
+                  <Button color="inherit" component={Link} to="/admin/orders">Manage Orders</Button>
+                  <Button color="inherit" component={Link} to="/admin/products">Manage Products</Button>
+                </>
               )}
 
               <Button color="inherit" onClick={handleLogout}>Logout</Button>
             </>
           ) : (
-            // If user is not logged in, show Login button
+            // --- Link for LOGGED-OUT users ---
             <Button color="inherit" component={Link} to="/login">Login</Button>
           )}
         </Box>

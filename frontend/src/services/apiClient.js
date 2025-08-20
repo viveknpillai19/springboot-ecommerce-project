@@ -147,3 +147,66 @@ export async function updateUserProfile(profileData, token) {
   if (!response.ok) throw new Error('Failed to update user profile');
   return await response.json();
 }
+export async function updateProduct(productId, productData, imageFile, token) {
+  const formData = new FormData();
+  formData.append('product', new Blob([JSON.stringify(productData)], { type: 'application/json' }));
+  if (imageFile) {
+    formData.append('image', imageFile);
+  }
+
+  const response = await fetch(`${BASE_URL}/admin/products/${productId}`, {
+    method: 'PUT',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData,
+  });
+  if (!response.ok) throw new Error('Failed to update product');
+  return await response.json();
+}
+
+export async function deleteProduct(productId, token) {
+  const response = await fetch(`${BASE_URL}/admin/products/${productId}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Failed to delete product');
+}
+
+export async function createProduct(productData, imageFile, token) {
+  const formData = new FormData();
+  // The 'product' part must match the @RequestPart name in the backend controller
+  formData.append('product', new Blob([JSON.stringify(productData)], { type: 'application/json' }));
+  formData.append('image', imageFile);
+
+  const response = await fetch(`${BASE_URL}/admin/products`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData,
+  });
+  if (!response.ok) throw new Error('Failed to create product');
+  return await response.json();
+}
+
+export async function fetchCategories() {
+  const response = await fetch(`${BASE_URL}/categories`);
+  if (!response.ok) throw new Error('Failed to fetch categories');
+  return await response.json();
+}
+
+export async function fetchBrands() {
+  const response = await fetch(`${BASE_URL}/brands`);
+  if (!response.ok) throw new Error('Failed to fetch brands');
+  return await response.json();
+}
+
+export async function createCategory(categoryData, token) {
+  const response = await fetch(`${BASE_URL}/categories`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(categoryData),
+  });
+  if (!response.ok) throw new Error('Failed to create category');
+  return await response.json();
+}

@@ -32,24 +32,22 @@ public class OrderService {
     @Transactional
     public Order placeOrder(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Cart cart = cartRepository.findByUserEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Cart not found for user: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
 
         if (cart.getItems().isEmpty()) {
             throw new IllegalStateException("Cannot place an order with an empty cart.");
         }
 
         Address shippingAddress = user.getAddresses().stream().findFirst()
-                .orElseThrow(() -> new RuntimeException("No shipping address found. Please add an address to your profile."));
+                .orElseThrow(() -> new IllegalStateException("No shipping address found. Please add an address to your profile."));
 
         Order order = new Order();
         order.setUser(user);
         order.setStatus(OrderStatus.PROCESSING);
         order.setItems(new ArrayList<>());
-
-        // Copy shipping address details to the order
         order.setShippingStreet(shippingAddress.getStreet());
         order.setShippingCity(shippingAddress.getCity());
         order.setShippingState(shippingAddress.getState());
@@ -58,36 +56,36 @@ public class OrderService {
 
         BigDecimal totalPrice = BigDecimal.ZERO;
 
-        // Process each cart item
         for (var cartItem : cart.getItems()) {
             Product product = cartItem.getProduct();
 
-            // 1. Validate stock
+            // --- THIS IS THE FIX ---
+            // Add a safety check to ensure the product from the cart still exists
+            if (product == null) {
+                throw new IllegalStateException("A product in your cart is no longer available. Please remove it to continue.");
+            }
+            // --- END OF FIX ---
+
             if (product.getStock() < cartItem.getQuantity()) {
                 throw new IllegalStateException("Insufficient stock for product: " + product.getName());
             }
 
-            // 2. Decrement stock
             product.setStock(product.getStock() - cartItem.getQuantity());
 
-            // 3. Create OrderItem and link it to the Order
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
             orderItem.setProduct(product);
             orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setPrice(product.getPrice()); // Capture current price
+            orderItem.setPrice(product.getPrice());
             order.getItems().add(orderItem);
 
             totalPrice = totalPrice.add(product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
         }
 
         order.setTotalPrice(totalPrice);
-
-        // 4. Clear the cart
         cart.getItems().clear();
         cartRepository.save(cart);
 
-        // 5. Save the order
         return orderRepository.save(order);
     }
     public List<OrderResponse> getOrdersForUser(String email) {

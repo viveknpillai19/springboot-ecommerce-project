@@ -11,4 +11,6 @@ public class ProductRequest {
     private Integer stock;
     private Long categoryId;
     private Long brandId;
+    private String newCategoryName;
+    private String newBrandName;
 }

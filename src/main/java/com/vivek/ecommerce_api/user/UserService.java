@@ -1,5 +1,6 @@
 package com.vivek.ecommerce_api.user;
 
+import com.vivek.ecommerce_api.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -39,24 +40,24 @@ public class UserService {
     @Transactional
     public UserResponse updateUserProfile(String email, UpdateProfileRequest request) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User profile not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User profile not found"));
 
         if (request.getName() != null) {
             user.setName(request.getName());
         }
 
         if (request.getAddresses() != null) {
-            // --- This entire section is the corrected logic ---
             Map<Long, Address> existingAddresses = user.getAddresses().stream()
                     .collect(Collectors.toMap(Address::getId, address -> address));
+
             Set<Long> requestAddressIds = request.getAddresses().stream()
                     .map(AddressDTO::getId)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
 
+            // Process updates and additions
             for (AddressDTO dto : request.getAddresses()) {
                 if (dto.getId() != null) {
-                    // Update existing address
                     Address addressToUpdate = existingAddresses.get(dto.getId());
                     if (addressToUpdate != null) {
                         addressToUpdate.setStreet(dto.getStreet());
@@ -66,22 +67,19 @@ public class UserService {
                         addressToUpdate.setCountry(dto.getCountry());
                     }
                 } else {
-                    // Add new address - THIS IS THE CORRECTED PART
                     Address newAddress = new Address();
                     newAddress.setStreet(dto.getStreet());
                     newAddress.setCity(dto.getCity());
                     newAddress.setState(dto.getState());
                     newAddress.setPostalCode(dto.getPostalCode());
-                    newAddress.setCountry(dto.getCountry()); // Ensure all fields are set
+                    newAddress.setCountry(dto.getCountry());
                     user.addAddress(newAddress);
                 }
             }
 
-            // Remove addresses that were in the DB but not in the request
-            List<Address> addressesToRemove = user.getAddresses().stream()
-                    .filter(address -> address.getId() != null && !requestAddressIds.contains(address.getId()))
-                    .toList();
-            user.getAddresses().removeAll(addressesToRemove);
+            user.getAddresses().removeIf(address ->
+                    address.getId() != null && !requestAddressIds.contains(address.getId())
+            );
         }
 
         User updatedUser = userRepository.save(user);

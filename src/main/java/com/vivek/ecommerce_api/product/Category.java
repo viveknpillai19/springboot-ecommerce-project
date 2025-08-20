@@ -14,4 +14,12 @@ import lombok.EqualsAndHashCode;
 public class Category extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String name;
+
+    public Category() {
+    }
+
+    // 2. Constructor to easily create a new category with a name
+    public Category(String name) {
+        this.name = name;
+    }
 }

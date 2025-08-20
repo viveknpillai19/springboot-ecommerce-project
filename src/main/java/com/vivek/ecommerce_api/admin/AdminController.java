@@ -67,4 +67,12 @@ public class AdminController {
                                                            @RequestBody UpdateOrderStatusRequest request) {
         return ResponseEntity.ok(orderService.updateOrderStatus(orderId, request.getStatus()));
     }
+
+    @PutMapping("/products/{productId}")
+    public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long productId,
+                                                         @RequestPart("product") ProductRequest productRequest,
+                                                         @RequestPart(value = "image", required = false) MultipartFile image) {
+        ProductResponse updatedProduct = productService.updateProduct(productId, productRequest, image);
+        return ResponseEntity.ok(updatedProduct);
+    }
 }

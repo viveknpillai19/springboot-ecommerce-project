@@ -1,5 +1,6 @@
 package com.vivek.ecommerce_api.product;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
 import com.vivek.ecommerce_api.product.ProductResponse;
 import com.vivek.ecommerce_api.product.ProductService;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api/products")
 public class ProductController {
 

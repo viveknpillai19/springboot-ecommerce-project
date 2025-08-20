@@ -1,26 +1,30 @@
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { 
+  fetchProducts,
   loginUser, 
   registerUser, 
   getCart, 
   addItemToCart, 
   removeItemFromCart, 
-  // 1. Rename the imported function here to avoid conflict
-  placeOrder as apiPlaceOrder 
+  placeOrder 
 } from '../services/apiClient';
 
-// Create the context
 const AuthContext = createContext();
 
-// Create the provider component
 export function AuthProvider({ children }) {
-  // --- STATE ---
+  // === STATE MANAGEMENT ===
+  // Auth State
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [user, setUser] = useState(null);
+  // Cart State
   const [cart, setCart] = useState(null);
+  // Product & Search State
+  const [allProducts, setAllProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // --- HELPER FUNCTIONS ---
+  // === HELPER FUNCTIONS ===
   const fetchCart = useCallback(async (currentToken) => {
     if (currentToken) {
       try {
@@ -29,21 +33,21 @@ export function AuthProvider({ children }) {
       } catch (error) {
         console.error("Failed to fetch cart:", error);
         if (error.message.includes('401') || error.message.includes('403')) {
-          logout(); // Log out if token is invalid
+          logout();
         }
       }
     }
   }, []);
 
+  // === EFFECTS ===
 
-  // --- EFFECTS ---
-  // This effect runs whenever the token changes
+  // Effect to handle token changes (login/logout)
   useEffect(() => {
     if (token) {
       localStorage.setItem('token', token);
       const decodedUser = jwtDecode(token);
       setUser(decodedUser);
-      fetchCart(token);
+      fetchCart(token); // Fetch cart when user logs in
     } else {
       localStorage.removeItem('token');
       setUser(null);
@@ -51,8 +55,26 @@ export function AuthProvider({ children }) {
     }
   }, [token, fetchCart]);
 
+  // Effect to fetch all products once on initial app load
+  useEffect(() => {
+    const getProducts = async () => {
+      const productsData = await fetchProducts();
+      setAllProducts(productsData);
+      setFilteredProducts(productsData);
+    };
+    getProducts();
+  }, []);
 
-  // --- CONTEXT FUNCTIONS ---
+  // Effect to filter products when search term changes
+  useEffect(() => {
+    const results = allProducts.filter(product =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredProducts(results);
+  }, [searchTerm, allProducts]);
+
+  // === CONTEXT FUNCTIONS ===
+
   const login = async (email, password) => {
     try {
       const data = await loginUser(email, password);
@@ -81,7 +103,7 @@ export function AuthProvider({ children }) {
   const addToCart = async (productId, quantity) => {
     try {
       await addItemToCart(productId, quantity, token);
-      fetchCart(token); // Refresh cart after adding
+      fetchCart(token);
       alert('Item added to cart!');
     } catch (error) {
       console.error('Failed to add to cart:', error);
@@ -92,7 +114,7 @@ export function AuthProvider({ children }) {
   const removeFromCart = async (productId) => {
     try {
       await removeItemFromCart(productId, token);
-      fetchCart(token); // Refresh cart after removing
+      fetchCart(token);
     } catch (error) {
       console.error('Failed to remove from cart:', error);
     }
@@ -100,9 +122,8 @@ export function AuthProvider({ children }) {
 
   const placeOrder = async () => {
     try {
-      // 2. Call the renamed API function here
-      const successMessage = await apiPlaceOrder(token);
-      fetchCart(token); // Refresh the cart, which will now be empty
+      const successMessage = await placeOrder(token);
+      fetchCart(token);
       return successMessage;
     } catch (error) {
       console.error('Failed to place order:', error);
@@ -115,6 +136,9 @@ export function AuthProvider({ children }) {
     token,
     user,
     cart,
+    filteredProducts,
+    searchTerm,
+    setSearchTerm,
     login,
     logout,
     register,
@@ -130,7 +154,7 @@ export function AuthProvider({ children }) {
   );
 }
 
-// Create a custom hook to easily use the context
+// Custom hook to easily use the context
 export function useAuth() {
   return useContext(AuthContext);
 }

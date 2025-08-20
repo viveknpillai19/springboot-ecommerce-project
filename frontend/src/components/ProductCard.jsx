@@ -6,12 +6,13 @@ function ProductCard({ product }) {
   const { token, addToCart } = useAuth();
 
   const handleAddToCart = () => {
-    addToCart(product.id, 1); // Add 1 quantity
+    addToCart(product.id, 1);
   };
 
   return (
-    <Card sx={{ maxWidth: 345, height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardActionArea>
+    // Make the Card a flex container that fills the height of its parent
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardActionArea sx={{ flexGrow: 1 }}>
         <CardMedia
           component="img"
           height="140"
@@ -21,9 +22,10 @@ function ProductCard({ product }) {
         <CardContent>
           <Typography gutterBottom variant="h5" component="div">{product.name}</Typography>
           <Typography variant="body2" color="text.secondary">{product.description}</Typography>
-          <Typography variant="h6" color="primary" sx={{ mt: 2 }}>${product.price}</Typography>
+          <Typography variant="h6" color="primary" sx={{ mt: 2 }}>${product.price.toFixed(2)}</Typography>
         </CardContent>
       </CardActionArea>
+      {/* This ensures the button always sticks to the bottom of the card */}
       <CardActions sx={{ marginTop: 'auto' }}>
         <Button size="small" color="primary" disabled={!token} onClick={handleAddToCart}>
           Add to Cart

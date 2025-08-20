@@ -1,22 +1,11 @@
-import { useEffect, useState } from 'react';
-import { fetchProducts } from '../services/apiClient';
+// src/pages/ProductsPage.jsx
+import { useAuth } from '../context/AuthContext'; // Import useAuth
 import ProductCard from '../components/ProductCard';
-import Grid from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
+import { Grid, Typography } from '@mui/material';
 
 function ProductsPage() {
-  const [products, setProducts] = useState([]);
-
-  // useEffect runs this code when the component first loads
-  useEffect(() => {
-    // We define an async function inside so we can use await
-    const getProducts = async () => {
-      const productsData = await fetchProducts();
-      setProducts(productsData);
-    };
-
-    getProducts();
-  }, []); // The empty array means this effect runs only once
+  // Get the globally filtered product list from the context
+  const { filteredProducts } = useAuth();
 
   return (
     <div>
@@ -24,9 +13,9 @@ function ProductsPage() {
         Our Products
       </Typography>
       <Grid container spacing={4}>
-        {products.map((product) => (
-          <Grid key={product.id} xs={12} sm={6} md={4}>
-          <ProductCard product={product} />
+        {filteredProducts.map((product) => (
+          <Grid item key={product.id} xs={12} sm={6} md={4}>
+            <ProductCard product={product} />
           </Grid>
         ))}
       </Grid>
